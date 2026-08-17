@@ -41,7 +41,7 @@ jobs:
           sdkmanager "build-tools;34.0.0"
 
       - name: Restore
-        run: dotnet restore UABEAAndroid.csproj
+  run: dotnet restore UABEAAndroid/UABEAAndroid.csproj
 
       - name: Build APK
         run: |
