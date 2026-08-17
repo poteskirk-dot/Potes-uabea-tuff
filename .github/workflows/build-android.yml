@@ -14,10 +14,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 6.0.x
+          dotnet-version: '6.0.x'
 
       - name: Install Android workload
         run: dotnet workload install android
@@ -25,23 +31,29 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android 34 SDK
+      - name: Accept Android licenses
+        run: yes | sdkmanager --licenses || true
+
+      - name: Install Android 34
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-34"
+          sdkmanager "build-tools;34.0.0"
 
       - name: Restore
-        run: dotnet restore UABEAAndroid/UABEAAndroid.csproj
+        run: dotnet restore UABEAAndroid.csproj
 
       - name: Build APK
         run: |
-          dotnet publish UABEAAndroid/UABEAAndroid.csproj \
-            -c Release \
-            -f net6.0-android31.0 \
-            -p:AndroidPackageFormat=apk \
-            -p:AndroidUseLatestPlatformSdk=true
+          dotnet publish UABEAAndroid.csproj \
+            --configuration Release \
+            --framework net6.0-android31.0 \
+            --property:AndroidPackageFormat=apk \
+            --property:AndroidUseLatestPlatformSdk=true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: UABEA-Android-APK
-          path: UABEAAndroid/bin/Release/net6.0-android31.0/publish/*.apk
+          path: |
+            bin/Release/net6.0-android31.0/publish/*.apk
