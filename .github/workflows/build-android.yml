@@ -11,16 +11,16 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup .NET
+      - name: Setup .NET 6
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '6.0.x'
@@ -28,31 +28,35 @@ jobs:
       - name: Install Android workload
         run: dotnet workload install android
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android licenses
-        run: yes | sdkmanager --licenses || true
-
-      - name: Install Android SDK 34
+      - name: Accept Android SDK licenses
         run: |
-          sdkmanager "platform-tools"
-          sdkmanager "platforms;android-34"
-          sdkmanager "build-tools;34.0.0"
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Restore
-  run: dotnet restore UABEAAndroid/UABEAAndroid.csproj
+      - name: Install Android SDK
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-34" \
+            "build-tools;34.0.0"
+
+      - name: Restore project
+        run: dotnet restore UABEAAndroid/UABEAAndroid.csproj
 
       - name: Build APK
         run: |
-          dotnet publish UABEAAndroid.csproj \
+          dotnet publish UABEAAndroid/UABEAAndroid.csproj \
             -c Release \
             -f net6.0-android31.0 \
             -p:AndroidPackageFormat=apk \
             -p:AndroidUseLatestPlatformSdk=true
 
+      - name: Find APK
+        run: |
+          echo "Searching for APK..."
+          find UABEAAndroid/bin/Release -type f -name "*.apk" -print
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: UABEA-Android-APK
-          path: bin/Release/net6.0-android31.0/publish/*.apk
+          path: UABEAAndroid/bin/Release/net6.0-android31.0/publish/*.apk
